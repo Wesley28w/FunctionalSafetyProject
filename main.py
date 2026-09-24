@@ -1,14 +1,21 @@
 import cv2
 from ultralytics import YOLO
+import math
 
 # CONSTANTS:
-FOV = 110.0 # how wide is the camera
+FOV_H = 110.0 # how wide is the camera
 RESOLUTION = (1920, 1080) # pixel size resolution
-FOCAL_LENGTH = FOV / 
 model = YOLO('yolo11n.pt')
 
 cap = cv2.VideoCapture(0) # 0 is for video cam
 
+# calculate import CONSTANTS:
+FOCAL_LENGTH = RESOLUTION[0] / (2 * math.tan(FOV_H / 2))
+FOV_V = 2 * math.atan(RESOLUTION[1] / (2 * FOCAL_LENGTH)) # focal length is same for V/H FOV
+
+# TODO: make this work for kids too (maybe use ratio of both?)
+HUMAN_HEIGHT = 71.0 # inches - 5'11"
+HUMAN_WIDTH = 16.1 # inches - Shoulder SPAN
 while cap.isOpened():
     success, frame = cap.read()
     if not success:
