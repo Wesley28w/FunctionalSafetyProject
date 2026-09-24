@@ -59,6 +59,11 @@ while cap.isOpened():
 
         shutdown = past_threshold(d_w, d_h, screenCoverRatio, conf)
         if (shutdown): break
+        
+    if (shutdown): 
+        print("SHUTDOWN") 
+    else: 
+        print("ON")
 
     cv2.imshow("Camera Stream", annotated_frame)
 
