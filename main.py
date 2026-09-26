@@ -3,7 +3,7 @@ from ultralytics import YOLO
 import math
 
 # CONSTANTS:
-FOV_H = 110.0 # how wide is the camera
+FOV_H = 122.0 # how wide is the camera. (Currently for Mac Air M4)
 RESOLUTION = (1920.0, 1080.0) # pixel size resolution
 STREAM_W = RESOLUTION[0]
 STREAM_H = RESOLUTION[1]
@@ -38,6 +38,7 @@ font_scale = 1
 thickeness = 2
 line_type = cv2.LINE_AA
 
+# calculate whether or not a box is TOO close to the camera.
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
     # if someone is too close (where their whole body is not even showing) we want to default to True
     if screen_cover_ratio > SCREEN_COVER_THRESHOLD: return True
