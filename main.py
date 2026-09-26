@@ -12,19 +12,26 @@ FOV_V = 2 * math.atan(STREAM_H / (2 * FOCAL_LENGTH)) # focal length is same for 
 
 # TODO: make this work for kids too (maybe use ratio of both?)
 # LIMITATION: if someone is too close to camera where you can't see entire body then distance will be off. But should disable regardless.
-HUMAN_HEIGHT = 71.0 # inches - 5'11"
+HUMAN_HEIGHT = 68.0 # inches - 5'8"
 HUMAN_WIDTH = 16.1 # inches - Shoulder SPAN
 
 # Calculation Constants
-WEIGHT_H = 0.6 # How much to weigh height distance calculation over width
-SCREEN_COVER_THRESHOLD = 0.5 # How much of the screen a person covers to be considered too close
-DISTANCE_THRESHOLD = 120 # inches. 10 feet
+# CURRENTLY NOT USING WIDTH BECAUSE VARIES TO HEAVILY
+WEIGHT_H = 1.0 # How much to weigh height distance calculation over width
+SCREEN_COVER_THRESHOLD = 0.3 # How much of the screen a person covers to be considered too close
+DISTANCE_THRESHOLD = 32 # inches. 10 feet
 model = YOLO('yolo11n.pt')
 
 # track whether shutdown or not
 shutdown = False
 
 cap = cv2.VideoCapture(0) # 0 is for video cam
+
+# set resolution
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, STREAM_W)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, STREAM_H)
+
+# for text display
 org = (50, 50)
 font = cv2.FONT_HERSHEY_SIMPLEX
 font_scale = 1 
@@ -37,8 +44,8 @@ def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: flo
 
     distance = (WEIGHT_H * distance_h) + ((1 - WEIGHT_H) * distance_w) # consolidate distances. Weighted
     # use confidence to reduce distance in order to stay safer on less confident predictions
-    distance = distance * (confidence) # Can make this confidence scaling exponential, or weighted in future
-    
+    # distance = distance * (confidence) # Can make this confidence scaling exponential, or weighted in future
+    print(f"Distance: {distance}")
     # if distance is too far 
     if distance < DISTANCE_THRESHOLD: return True
     return False
@@ -57,15 +64,17 @@ while cap.isOpened():
         xywh = result.boxes.xywh
         if len(xywh) == 0: continue
         
-        for box in xywh:
+        for index, box in enumerate(xywh):
             print(box)
             width, height = box[2], box[3] # in pixels
 
-            conf = result.boxes.conf # confidence
+            conf = result.boxes.conf[index] # confidence
             
             d_h = HUMAN_HEIGHT * (height / STREAM_H) # distance using height
             d_w = HUMAN_WIDTH * (width / STREAM_W) # distance using width
             screenCoverRatio = (width * height) / (STREAM_W * STREAM_H)
+
+            print(f"[LOG] Width: {width} Height: {height} D_h: {d_h} D_w: {d_w} SCR: {screenCoverRatio}")
 
             shutdown = past_threshold(d_w, d_h, screenCoverRatio, conf)
             if (shutdown): break
