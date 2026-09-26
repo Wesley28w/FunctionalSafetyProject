@@ -13,6 +13,7 @@ FOV_V = 2 * math.atan(STREAM_H / (2 * FOCAL_LENGTH)) # focal length is same for 
 # LIMITATION: if someone is too close to camera where you can't see entire body then distance will be off. But should disable regardless.
 HUMAN_HEIGHT = 68.0 # inches - 5'8"
 HUMAN_WIDTH = 19.0 # inches - Shoulder SPAN
+HUMAN_HALF_HEAD = 5.0
 ASPECT_RATIO = HUMAN_HEIGHT / HUMAN_WIDTH
 
 # Calculation Constants
