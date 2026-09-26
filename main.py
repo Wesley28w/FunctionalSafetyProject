@@ -4,7 +4,7 @@ import math
 
 # CONSTANTS:
 FOV_H = 110.0 # how wide is the camera
-RESOLUTION = (1920, 1080) # pixel size resolution
+RESOLUTION = (1920.0, 1080.0) # pixel size resolution
 STREAM_W = RESOLUTION[0]
 STREAM_H = RESOLUTION[1]
 FOCAL_LENGTH = STREAM_W / (2 * math.tan(FOV_H / 2))
@@ -25,6 +25,11 @@ model = YOLO('yolo11n.pt')
 shutdown = False
 
 cap = cv2.VideoCapture(0) # 0 is for video cam
+org = (50, 50)
+font = cv2.FONT_HERSHEY_SIMPLEX
+font_scale = 1 
+thickeness = 2
+line_type = cv2.LINE_AA
 
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
     # if someone is too close (where their whole body is not even showing) we want to default to True
@@ -32,7 +37,7 @@ def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: flo
 
     distance = (WEIGHT_H * distance_h) + ((1 - WEIGHT_H) * distance_w) # consolidate distances. Weighted
     # use confidence to reduce distance in order to stay safer on less confident predictions
-    distance *= (confidence) # Can make this confidence scaling exponential, or weighted in future
+    distance = distance * (confidence) # Can make this confidence scaling exponential, or weighted in future
     
     # if distance is too far 
     if distance < DISTANCE_THRESHOLD: return True
@@ -49,26 +54,29 @@ while cap.isOpened():
     # plot the bounding box
     for result in results:
         annotated_frame = result.plot()
-        xywh = result.boxes.xywh # center x/y, width, height
-        width, height = xywh[2], xywh[3] # in pixels
-        conf = result.boxes.conf # confidence
+        xywh = result.boxes.xywh
+        if len(xywh) == 0: continue
         
-        d_h = HUMAN_HEIGHT * (height / STREAM_H) # distance using height
-        d_w = HUMAN_WIDTH * (width / STREAM_W) # distance using width
-        screenCoverRatio = (width * height) / (STREAM_W * STREAM_H)
+        for box in xywh:
+            print(box)
+            width, height = box[2], box[3] # in pixels
 
-        shutdown = past_threshold(d_w, d_h, screenCoverRatio, conf)
+            conf = result.boxes.conf # confidence
+            
+            d_h = HUMAN_HEIGHT * (height / STREAM_H) # distance using height
+            d_w = HUMAN_WIDTH * (width / STREAM_W) # distance using width
+            screenCoverRatio = (width * height) / (STREAM_W * STREAM_H)
+
+            shutdown = past_threshold(d_w, d_h, screenCoverRatio, conf)
+            if (shutdown): break
         if (shutdown): break
-        
-    if (shutdown): 
-        print("SHUTDOWN") 
-    else: 
-        print("ON")
+
+    cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
     cv2.imshow("Camera Stream", annotated_frame)
 
     # pauses execution for 1 ms delay, checks for q key press (quits)
-    if (cv2.waitKey(1) and 0xFF == ord("q")) or shutdown:
+    if (cv2.waitKey(1) and 0xFF == ord("q")):
         break
     
 # clean up
