@@ -13,14 +13,16 @@ FOV_V = 2 * math.atan(STREAM_H / (2 * FOCAL_LENGTH)) # focal length is same for 
 # TODO: make this work for kids too (maybe use ratio of both?)
 # LIMITATION: if someone is too close to camera where you can't see entire body then distance will be off. But should disable regardless.
 HUMAN_HEIGHT = 68.0 # inches - 5'8"
-HUMAN_WIDTH = 16.1 # inches - Shoulder SPAN
+HUMAN_WIDTH = 19.0 # inches - Shoulder SPAN
+ASPECT_RATIO = HUMAN_HEIGHT / HUMAN_WIDTH
 
 # Calculation Constants
 # CURRENTLY NOT USING WIDTH BECAUSE VARIES TO HEAVILY
 WEIGHT_H = 1.0 # How much to weigh height distance calculation over width
 SCREEN_COVER_THRESHOLD = 0.3 # How much of the screen a person covers to be considered too close
 DISTANCE_THRESHOLD = 32 # inches. 10 feet
-model = YOLO('yolo11n.pt')
+general_model = YOLO('yolo11n.pt')
+face_model = YOLO('yolo11n-face.pt')
 
 # track whether shutdown or not
 shutdown = False
@@ -57,10 +59,10 @@ while cap.isOpened():
         break
 
     # run inference on frame
-    results = model(frame, classes=[0], stream=True) # classes is list of items to track - 0 is person, stream = True makes more effecient
+    person_results = general_model(frame, classes=[0], stream=True) # classes is list of items to track - 0 is person, stream = True makes more effecient
 
     # plot the bounding box
-    for result in results:
+    for result in person_results:
         annotated_frame = result.plot()
         xywh = result.boxes.xywh
         if len(xywh) == 0: continue
