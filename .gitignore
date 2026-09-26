@@ -1,2 +1,3 @@
 runs/*
 fsb/*
+__pycache__/*
