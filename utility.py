@@ -18,7 +18,7 @@ def bbox_heat_value(box, thermals):
     # turn the box into an 8*8 detection estimation
     min_x, max_x, min_y, max_y = x-(w/2), x+(w/2), y-(h/2), y+(h/2)
     vision_grid_space = np.zeros((8, 8), dtype=int)
-    vision_grid_space[min_x:min_x, min_y, max_y]
+    vision_grid_space[min_x:max_x, min_y, max_y]
 
     thermals = np.array[thermals]
 
