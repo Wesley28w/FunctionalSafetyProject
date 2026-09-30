@@ -1,5 +1,15 @@
 from constants import *
 
+def filter_low_conf(threshold, confidences):
+    confident_results = []
+   
+    # filter the low confidence results out
+    for index, conf_score in enumerate(confidences):
+         if conf_score > threshold:
+           confident_results.append(index)
+    # return indices
+    return confident_results
+
 # calculate whether or not a box is TOO close to the camera.
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
     # if someone is too close (where their whole body is not even showing) we want to default to True
