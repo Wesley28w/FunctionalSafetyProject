@@ -46,6 +46,7 @@ while cap.isOpened():
             annotated_frame = face_results[0].plot(img=annotated_frame)
     else:
         annotated_frame = frame
+        shutdown = False
 
     cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
