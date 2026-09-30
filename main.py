@@ -18,7 +18,7 @@ sensor = adafruit_amg88xx.AMG88XX(i2c)
 
 def get_thermal_frame():
     # returns 8x8 list of temps in C
-    return sensor.pixels() 
+    return sensor.pixels 
 
 # track whether shutdown or not
 shutdown = False
