@@ -4,8 +4,13 @@ import math
 # CONSTANTS:
 FOV_H = 122.0 # how wide is the camera. (Currently for Mac Air M4)
 RESOLUTION = (1920.0, 1080.0) # pixel size resolution
+THERMALS_RESOLUTION = (8.0, 8.0)
+
 STREAM_W = RESOLUTION[0]
 STREAM_H = RESOLUTION[1]
+THERMAL_W = THERMALS_RESOLUTION[0]
+THERMAL_H = THERMALS_RESOLUTION[1]
+
 FOCAL_LENGTH = STREAM_W / (2 * math.tan(FOV_H / 2))
 FOV_V = 2 * math.atan(STREAM_H / (2 * FOCAL_LENGTH)) # focal length is same for V/H FOV
 

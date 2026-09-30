@@ -1,4 +1,6 @@
 from constants import *
+import numpy as np
+import math
 
 def filter_low_conf(threshold, confidences):
     confident_results = []
@@ -9,6 +11,21 @@ def filter_low_conf(threshold, confidences):
            confident_results.append(index)
     # return indices
     return confident_results
+
+def bbox_heat_value(box, thermals):
+    x, y, w, h, = box
+    
+    # turn the box into an 8*8 detection estimation
+    min_x, max_x, min_y, max_y = x-(w/2), x+(w/2), y-(h/2), y+(h/2)
+    vision_grid_space = np.zeros((8, 8), dtype=int)
+    vision_grid_space[min_x:min_x, min_y, max_y]
+
+    thermals = np.array[thermals]
+
+    # element wise product (multiply each detection box by the thermal) Zeros cancel out other parts.
+    value = np.mean(np.multiply(vision_grid_space, thermals)).item()
+
+    return value
 
 # calculate whether or not a box is TOO close to the camera.
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
