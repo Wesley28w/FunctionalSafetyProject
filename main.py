@@ -1,3 +1,7 @@
+import time
+import board
+import busio
+import adafruit_amg88xx
 import cv2
 from ultralytics import YOLO
 from constants import *
@@ -6,6 +10,15 @@ from picamera2 import Picamera2
 
 general_model = YOLO('yolo11n.pt')
 face_model = YOLO('yolov11n-face.pt')
+
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# init the AMG8833 sensor
+sensor = adafruit_amg88xx.AMG88XX(i2c)
+
+def get_thermal_frame():
+    # returns 8x8 list of temps in C
+    return sensor.pixels() 
 
 # track whether shutdown or not
 shutdown = False
@@ -25,7 +38,11 @@ print("Camera connected successfully.")
 
 while True:
     frame = picam2.capture_array()
-    
+    thermal_readings = get_thermal_frame()
+    for row in frame:
+        print(" ".join(f"{temp:6.2f}" for temp in row))
+    print("-------------------------------")
+
     # run inference on frame
     person_results = list(general_model(frame, classes=[0], stream=True))[0] # classes is list of items to track - 0 is person, stream = True makes more effecient
     face_results = list(face_model(frame, classes=[0], stream=True))[0] # detects faces for estimating human frame
