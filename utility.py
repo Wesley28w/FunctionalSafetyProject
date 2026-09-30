@@ -15,17 +15,19 @@ def filter_low_conf(threshold, confidences):
 def bbox_heat_value(box, thermals):
     x, y, w, h, = box
     
-    # turn the box into an 8*8 detection estimation
-    min_x, max_x, min_y, max_y = int(x-(w/2)), int( x+(w/2)), int(y-(h/2)), int(y+(h/2))
-    vision_grid_space = np.zeros((8, 8), dtype=int)
-    vision_grid_space[min_x:max_x, min_y: max_y]
+    min_x = max(0, int(x - w / 2))
+    max_x = min(8, int(x + w / 2))
 
-    thermals = np.array(thermals)
+    min_y = max(0, int(y - h / 2))
+    max_y = min(8, int(y + h / 2))
 
-    # element wise product (multiply each detection box by the thermal) Zeros cancel out other parts.
-    value = np.mean(np.multiply(vision_grid_space, thermals)).item()
+    thermals = np.asarray(thermals)
 
-    return value
+    region = thermals[min_y:max_y, min_x:max_x]
+
+    if region.size == 0: return 0.0
+
+    return region.mean().item()
 
 # calculate whether or not a box is TOO close to the camera.
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
