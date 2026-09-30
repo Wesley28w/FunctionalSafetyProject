@@ -8,6 +8,7 @@ face_model = YOLO('yolov11n-face.pt')
 
 # track whether shutdown or not
 shutdown = False
+debouncer = Debouncer(1.0, False)
 
 cap = cv2.VideoCapture(0) # 0 is for video cam
 
@@ -34,11 +35,14 @@ while cap.isOpened():
         ratio = (box[2] * box[3]) / (STREAM_W * STREAM_H)
         print(ratio)
         if ratio > 0.01:
-            shutdown = True
+            shutdown = debouncer.touch(value=True)
             break
         else:
             shutdown = False
     
+    # print(f"Person Results {person_results}. Face Results: {face_results}")
+    if (not face_results and person_results): shutdown = debouncer.touch(value=True) # if only body is showing, no face disable. Not safe
+
     # pass annotated into itself
     if person_results:
         annotated_frame = person_results[0].plot(img=frame)
@@ -46,7 +50,7 @@ while cap.isOpened():
             annotated_frame = face_results[0].plot(img=annotated_frame)
     else:
         annotated_frame = frame
-        shutdown = False
+        shutdown = debouncer.touch(value=False)
 
     cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
