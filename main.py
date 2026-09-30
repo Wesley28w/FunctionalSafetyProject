@@ -15,12 +15,14 @@ i2c = busio.I2C(board.SCL, board.SDA)
 
 # init the AMG8833 sensor
 sensor = adafruit_amg88xx.AMG88XX(i2c)
+thermal_readings = [] # will get replaced as 8*8 reading.
 
 def get_thermal_frame():
     # returns 8x8 list of temps in C
     return sensor.pixels 
 
 # track whether shutdown or not
+counter = 0
 shutdown = False
 
 cap = cv2.VideoCapture(0, cv2.CAP_V4L2) # 0 is for video cam
@@ -38,10 +40,9 @@ print("Camera connected successfully.")
 
 while True:
     frame = picam2.capture_array()
-    thermal_readings = get_thermal_frame()
-    for row in frame:
-        print(" ".join(f"{temp:6.2f}" for temp in row))
-    print("-------------------------------")
+    if counter % 3 == 0:
+         thermal_readings = get_thermal_frame()
+         print(f"Thermal Sensor Readings: {thermal_readings}")
 
     # run inference on frame
     person_results = list(general_model(frame, classes=[0], stream=True))[0] # classes is list of items to track - 0 is person, stream = True makes more effecient
@@ -65,7 +66,9 @@ while True:
     print(shutdown)
 
     if not person_results:
-       shutdown = False 
+       shutdown = False
+
+    counter += 1 
     # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
     # cv2.imshow("Camera Stream", annotated_frame)
