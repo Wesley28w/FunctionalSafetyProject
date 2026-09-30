@@ -21,6 +21,7 @@ class Debouncer:
         self.last_raw_value = initial_state
         self.transition_time = None
 
+    # TODO: should seperate falling and rising
     def touch(self, value: bool) -> bool:
         current_time = time.time()
 
