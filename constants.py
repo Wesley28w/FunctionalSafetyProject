@@ -22,6 +22,9 @@ WEIGHT_H = 1.0 # How much to weigh height distance calculation over width
 SCREEN_COVER_THRESHOLD = 0.3 # How much of the screen a person covers to be considered too close
 DISTANCE_THRESHOLD = 32 # inches. 10 feet
 
+CONFIDENCE_THRESHOLD_PERSON = 0.5
+CONFIDENCE_THRESHOLD_FACE = 0.5
+
 # for text display
 org = (50, 50)
 font = cv2.FONT_HERSHEY_SIMPLEX
