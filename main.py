@@ -53,15 +53,23 @@ while True:
 
     person_xywh = person_results.boxes.xywh
     face_xywh = face_results.boxes.xywh
-    
+
     for box in face_xywh:
         ratio = (box[2] * box[3]) / (STREAM_W * STREAM_H)
-        print(ratio)
+        print(f"Face Ratio: {ratio}")
         if ratio > 0.01:
             shutdown = True
             break
         else:
             shutdown = False
+
+    for box in person_xywh:
+        value = bbox_heat_value(box, thermal_readings)
+        print(f"Thermals Value: {value}")
+
+        if abs(value - 1500) < 300:
+            # do something. Need to tune values
+            continue
 
     print(shutdown)
 
