@@ -1,0 +1,32 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Computer vision / ML
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+ultralytics==8.4.170
+numpy==2.2.4
+opencv-python==5.0.0.93
+pillow==11.1.0
+
+# Raspberry Pi camera
+picamera2==0.3.37
+av==14.2.0
+
+# AMG8833 thermal sensor
+Adafruit-Blinka==9.2.0
+Adafruit-Blinka-Raspberry-Pi5-Neopixel==1.0.0rc2
+adafruit-circuitpython-amg88xx==1.2.28
+smbus2==0.4.3
+
+# GPIO / hardware
+gpiozero==2.0.1
+gpiod==2.2.0
+pyserial==3.5
+
+# Robot control
+pymycobot
+
+# Utilities
+requests==2.32.3
+PyYAML==6.0.2
+tqdm==4.67.1

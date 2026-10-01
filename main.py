@@ -1,94 +1,100 @@
+import time
+import board
+import busio
+import adafruit_amg88xx
 import cv2
 from ultralytics import YOLO
-import math
+from constants import *
+from utility import *
+from picamera2 import Picamera2
+from gpiozero import OutputDevice
 
-# CONSTANTS:
-FOV_H = 122.0 # how wide is the camera. (Currently for Mac Air M4)
-RESOLUTION = (1920.0, 1080.0) # pixel size resolution
-STREAM_W = RESOLUTION[0]
-STREAM_H = RESOLUTION[1]
-FOCAL_LENGTH = STREAM_W / (2 * math.tan(FOV_H / 2))
-FOV_V = 2 * math.atan(STREAM_H / (2 * FOCAL_LENGTH)) # focal length is same for V/H FOV
+general_model = YOLO('yolo11n.pt')
+face_model = YOLO('yolov11n-face.pt')
 
-# TODO: make this work for kids too (maybe use ratio of both?)
-# LIMITATION: if someone is too close to camera where you can't see entire body then distance will be off. But should disable regardless.
-HUMAN_HEIGHT = 68.0 # inches - 5'8"
-HUMAN_WIDTH = 16.1 # inches - Shoulder SPAN
+i2c = busio.I2C(board.SCL, board.SDA)
 
-# Calculation Constants
-# CURRENTLY NOT USING WIDTH BECAUSE VARIES TO HEAVILY
-WEIGHT_H = 1.0 # How much to weigh height distance calculation over width
-SCREEN_COVER_THRESHOLD = 0.3 # How much of the screen a person covers to be considered too close
-DISTANCE_THRESHOLD = 32 # inches. 10 feet
-model = YOLO('yolo11n.pt')
+# init the AMG8833 sensor
+sensor = adafruit_amg88xx.AMG88XX(i2c)
+thermal_readings = [] # will get replaced as 8*8 reading.
+
+def get_thermal_frame():
+    # returns 8x8 list of temps in C
+    return sensor.pixels 
 
 # track whether shutdown or not
+counter = 0
 shutdown = False
 
-cap = cv2.VideoCapture(0) # 0 is for video cam
+cap = cv2.VideoCapture(0, cv2.CAP_V4L2) # 0 is for video cam
 
-# set resolution
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, STREAM_W)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, STREAM_H)
+picam2 = Picamera2()
 
-# for text display
-org = (50, 50)
-font = cv2.FONT_HERSHEY_SIMPLEX
-font_scale = 1 
-thickeness = 2
-line_type = cv2.LINE_AA
+camera_config = picam2.create_video_configuration(
+    main={"size": (int(STREAM_W), int(STREAM_H)), "format": "RGB888"}
+)
 
-# calculate whether or not a box is TOO close to the camera.
-def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
-    # if someone is too close (where their whole body is not even showing) we want to default to True
-    if screen_cover_ratio > SCREEN_COVER_THRESHOLD: return True
+picam2.configure(camera_config)
+picam2.start()
 
-    distance = (WEIGHT_H * distance_h) + ((1 - WEIGHT_H) * distance_w) # consolidate distances. Weighted
-    # use confidence to reduce distance in order to stay safer on less confident predictions
-    # distance = distance * (confidence) # Can make this confidence scaling exponential, or weighted in future
-    print(f"Distance: {distance}")
-    # if distance is too far 
-    if distance < DISTANCE_THRESHOLD: return True
-    return False
+print("Camera connected successfully.")
 
-while cap.isOpened():
-    success, frame = cap.read()
-    if not success:
-        break
+pin = OutputDevice(19)
+
+while True:
+    frame = picam2.capture_array()
+    if counter % 3 == 0:
+         thermal_readings = get_thermal_frame()
+         print(f"Thermal Sensor Readings: {thermal_readings}")
 
     # run inference on frame
-    results = model(frame, classes=[0], stream=True) # classes is list of items to track - 0 is person, stream = True makes more effecient
+    person_results = list(general_model(frame, classes=[0], stream=True))[0] # classes is list of items to track - 0 is person, stream = True makes more effecient
+    face_results = list(face_model(frame, classes=[0], stream=True))[0] # detects faces for estimating human frame
 
-    # plot the bounding box
-    for result in results:
-        annotated_frame = result.plot()
-        xywh = result.boxes.xywh
-        if len(xywh) == 0: continue
-        
-        for index, box in enumerate(xywh):
-            print(box)
-            width, height = box[2], box[3] # in pixels
+    person_results = person_results[filter_low_conf(CONFIDENCE_THRESHOLD_PERSON, person_results.boxes.conf)]
+    face_results = face_results[filter_low_conf(CONFIDENCE_THRESHOLD_FACE, face_results.boxes.conf)]
 
-            conf = result.boxes.conf[index] # confidence
-            
-            d_h = HUMAN_HEIGHT * (height / STREAM_H) # distance using height
-            d_w = HUMAN_WIDTH * (width / STREAM_W) # distance using width
-            screenCoverRatio = (width * height) / (STREAM_W * STREAM_H)
+    person_xywhn = person_results.boxes.xywhn
+    face_xywhn = face_results.boxes.xywhn
 
-            print(f"[LOG] Width: {width} Height: {height} D_h: {d_h} D_w: {d_w} SCR: {screenCoverRatio}")
+    face_close = False
+    person_detected = len(person_results.boxes) > 0
+    thermal_person = False
 
-            shutdown = past_threshold(d_w, d_h, screenCoverRatio, conf)
-            if (shutdown): break
-        if (shutdown): break
+    for box in face_xywhn:
+        ratio = float(box[2] * box[3])
+        print("Ratio:", ratio)
+        if ratio > 0.01:
+            face_close = True
+            break
 
-    cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
+    for box in person_xywhn:
+        heat = bbox_heat_value(box, thermal_readings)
 
-    cv2.imshow("Camera Stream", annotated_frame)
+        print("Heat Value:", heat)
+
+        if abs(heat - 25.0) < 2.5: thermal_person = True
+ 
+    shutdown = (thermal_person and person_detected) or (face_close)
+
+    counter += 1
+
+    if (shutdown): 
+        pin.on()
+    else: 
+        pin.off()
+    
+    # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
+
+    # cv2.imshow("Camera Stream", annotated_frame)
 
     # pauses execution for 1 ms delay, checks for q key press (quits)
-    if (cv2.waitKey(1) and 0xFF == ord("q")):
-        break
+    # if (cv2.waitKey(1) & 0xFF) == ord("q"):
+    #   break
+
+    # if (shutdown): break
+
     
 # clean up
-cap.release()
+picam2.stop()
 cv2.destroyAllWindows()
