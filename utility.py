@@ -18,11 +18,11 @@ def bbox_heat_value(box, thermals):
     
     thermal_h, thermal_w = thermals.shape
 
-    x_1 = int(np.floor((x - w / 2) *thermal_w))
-    x_2 = int(np.ceil((x + w / 2) * thermal_w))
+    x1 = int(np.floor((x - w / 2) *thermal_w))
+    x2 = int(np.ceil((x + w / 2) * thermal_w))
 
-    y_1 = int(np.floor((y - h / 2) * thermal_h))
-    y_2 = int(np.ceil((y + h / 2) * thermal_h))
+    y1 = int(np.floor((y - h / 2) * thermal_h))
+    y2 = int(np.ceil((y + h / 2) * thermal_h))
 
     #clamp
     x1 = max(0, min(thermal_w - 1, x1))
