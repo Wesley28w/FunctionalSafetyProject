@@ -51,30 +51,29 @@ while True:
     person_results = person_results[filter_low_conf(CONFIDENCE_THRESHOLD_PERSON, person_results.boxes.conf)]
     face_results = face_results[filter_low_conf(CONFIDENCE_THRESHOLD_FACE, face_results.boxes.conf)]
 
-    person_xywh = person_results.boxes.xywh
-    face_xywh = face_results.boxes.xywh
+    person_xywhn = person_results.boxes.xywhn
+    face_xywhn = face_results.boxes.xywhn
 
-    for box in face_xywh:
-        ratio = (box[2] * box[3]) / (STREAM_W * STREAM_H)
-        print(f"Face Ratio: {ratio}")
+    face_close = False
+    person_detected = len(person_results.boxes) > 0
+    thermal_person = False
+
+    for box in face_xywhn:
+        ratio = float(box[2] * box[3])
+        print("Ratio:", ratio)
         if ratio > 0.01:
-            shutdown = True
+            face_close = True
             break
-        else:
-            shutdown = False
 
-    for box in person_xywh:
-        value = bbox_heat_value(box, thermal_readings)
-        print(f"Thermals Value: {value}")
+    for box in person_xywhn:
+        heat = bbox_heat_value(box, thermal_readings)
 
-        if abs(value - 1500) < 300:
-            # do something. Need to tune values
-            continue
+        print("Heat Value:", heat)
 
-    print(shutdown)
+        if abs(heat - 25.0) < 2.5: thermal_person = True
 
-    if not person_results:
-       shutdown = False
+    
+    shutdown = (thermal_person and person_detected) or (face_close)
 
     counter += 1 
     # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)

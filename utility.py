@@ -13,21 +13,35 @@ def filter_low_conf(threshold, confidences):
     return confident_results
 
 def bbox_heat_value(box, thermals):
-    x, y, w, h, = box
-    
-    min_x = max(0, int(x - w / 2))
-    max_x = min(8, int(x + w / 2))
-
-    min_y = max(0, int(y - h / 2))
-    max_y = min(8, int(y + h / 2))
-
     thermals = np.asarray(thermals)
+    x, y, w, h, = [float(v) for v in box]
+    
+    thermal_h, thermal_w = thermals.shape
 
-    region = thermals[min_y:max_y, min_x:max_x]
+    x_1 = int(np.floor((x - w / 2) *thermal_w))
+    x_2 = int(np.ceil((x + w / 2) * thermal_w))
 
-    if region.size == 0: return 0.0
+    y_1 = int(np.floor((y - h / 2) * thermal_h))
+    y_2 = int(np.ceil((y + h / 2) * thermal_h))
 
-    return region.mean().item()
+    #clamp
+    x1 = max(0, min(thermal_w - 1, x1))
+    x2 = max(x1 + 1, min(thermal_w, x2))
+
+    y1 = max(0, min(thermal_h - 1, y1))
+    y2 = max(y1 + 1, min(thermal_h, y2))
+
+    region = thermals[y1:y2, x1:x2]
+
+    print("Normalized bbox:", x, y, w, h)
+    print("Thermal bbox:", x1, y1, x2, y2)
+    print("Thermal region:")
+    print(region)
+
+    if region.size == 0:
+        return 0.0
+    
+    return float(region.mean())
 
 # calculate whether or not a box is TOO close to the camera.
 def past_threshold(distance_w: float, distance_h: float, screen_cover_ratio: float, confidence: float):
