@@ -7,6 +7,7 @@ from ultralytics import YOLO
 from constants import *
 from utility import *
 from picamera2 import Picamera2
+from gpiozero import OutputDevice
 
 general_model = YOLO('yolo11n.pt')
 face_model = YOLO('yolov11n-face.pt')
@@ -37,6 +38,8 @@ picam2.configure(camera_config)
 picam2.start()
 
 print("Camera connected successfully.")
+
+pin = OutputDevice(19)
 
 while True:
     frame = picam2.capture_array()
@@ -71,11 +74,16 @@ while True:
         print("Heat Value:", heat)
 
         if abs(heat - 25.0) < 2.5: thermal_person = True
-
-    
+ 
     shutdown = (thermal_person and person_detected) or (face_close)
 
-    counter += 1 
+    counter += 1
+
+    if (shutdown): 
+        pin.on()
+    else: 
+        pin.off()
+    
     # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
     # cv2.imshow("Camera Stream", annotated_frame)
