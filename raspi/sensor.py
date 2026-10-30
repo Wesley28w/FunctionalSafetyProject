@@ -23,3 +23,13 @@ def init_camera() -> int:
     except Exception as e:
         print(f"Camera failed to start: {e}")
 
+def init_IR() -> int:
+    i2c = busio.I2C(board.SCL, board.SDA)
+
+    # init the AMG8833 sensor
+    sensor = adafruit_amg88xx.AMG88XX(i2c)
+    thermal_readings = [] # will get replaced as 8*8 reading.
+
+def get_thermal_frame():
+    # returns 8x8 list of temps in C
+    return sensor.pixels
