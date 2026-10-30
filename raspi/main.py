@@ -4,8 +4,8 @@ import busio
 import adafruit_amg88xx
 import cv2
 from ultralytics import YOLO
-from constants import *
-from utility import *
+from raspi.constants import *
+from raspi.utility import *
 from picamera2 import Picamera2
 from gpiozero import OutputDevice
 
