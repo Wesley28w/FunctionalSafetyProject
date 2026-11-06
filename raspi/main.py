@@ -3,6 +3,10 @@ import board
 import busio
 import adafruit_amg88xx
 import cv2
+
+import utility
+from sensor import *
+
 from ultralytics import YOLO
 from raspi.constants import *
 from raspi.utility import *
@@ -12,39 +16,16 @@ from gpiozero import OutputDevice
 general_model = YOLO('yolo11n.pt')
 face_model = YOLO('yolov11n-face.pt')
 
-i2c = busio.I2C(board.SCL, board.SDA)
+pin_cfg = [[19], []] # index 0 is output, index 1 is input
 
-# init the AMG8833 sensor
-sensor = adafruit_amg88xx.AMG88XX(i2c)
-thermal_readings = [] # will get replaced as 8*8 reading.
-
-def get_thermal_frame():
-    # returns 8x8 list of temps in C
-    return sensor.pixels 
-
-# track whether shutdown or not
-counter = 0
-shutdown = False
-
-cap = cv2.VideoCapture(0, cv2.CAP_V4L2) # 0 is for video cam
-
-picam2 = Picamera2()
-
-camera_config = picam2.create_video_configuration(
-    main={"size": (int(STREAM_W), int(STREAM_H)), "format": "RGB888"}
-)
-
-picam2.configure(camera_config)
-picam2.start()
-
-print("Camera connected successfully.")
-
-pin = OutputDevice(19)
+raspi = Raspi(pin_cfg=pin_cfg)
+camera = Camera()
+ir = IRSensor()
 
 while True:
-    frame = picam2.capture_array()
+    frame = camera.capture_array()
     if counter % 3 == 0:
-         thermal_readings = get_thermal_frame()
+         thermal_readings = ir.get_thermals_frame()
          print(f"Thermal Sensor Readings: {thermal_readings}")
 
     # run inference on frame
@@ -80,9 +61,9 @@ while True:
     counter += 1
 
     if (shutdown): 
-        pin.on()
+        raspi.set_pin(19, True)
     else: 
-        pin.off()
+        raspi.set_pin(19, False)
     
     # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
 
