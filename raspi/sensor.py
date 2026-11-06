@@ -50,6 +50,9 @@ class Camera():
 
     def capture(self): return self.picam2.capture_array()
 
+    def stop(self):
+        self.picam2.stop()
+
 
 class IRSensor():
     def __init__(self):

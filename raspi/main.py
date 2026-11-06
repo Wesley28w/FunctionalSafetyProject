@@ -36,28 +36,8 @@ while True:
 
     person_xywhn = cv.get_person_wywhn(frame)
     face_xywhn = cv.get_face_wywhn(frame)
-
-    if person_detected(frame): shutdown = True
-
-    face_close = False
-    person_detected = len(person_results.boxes) > 0
-    thermal_person = False
-
-    for box in face_xywhn:
-        ratio = float(box[2] * box[3])
-        print("Ratio:", ratio)
-        if ratio > 0.01:
-            face_close = True
-            break
-
-    for box in person_xywhn:
-        heat = bbox_heat_value(box, thermal_readings)
-
-        print("Heat Value:", heat)
-
-        if abs(heat - 25.0) < 2.5: thermal_person = True
- 
-    shutdown = (thermal_person and person_detected) or (face_close)
+    person_detected = cv.person_detected(frame)
+    shutdown = crunch(person_xywhn, face_xywhn, thermal_readings, cv.person_detected(frame))
 
     counter += 1
 
@@ -66,17 +46,10 @@ while True:
     else: 
         raspi.set_pin(19, False)
     
-    # cv2.putText(annotated_frame, "Shutdown" if shutdown else "Running", org, font, font_scale, (0, 0, 255) if shutdown else (0, 255, 0), thickeness, line_type)
-
-    # cv2.imshow("Camera Stream", annotated_frame)
-
-    # pauses execution for 1 ms delay, checks for q key press (quits)
-    # if (cv2.waitKey(1) & 0xFF) == ord("q"):
-    #   break
-
-    # if (shutdown): break
+    if (cv2.waitKey(1) & 0xFF) == ord("q"):
+      break
 
     
 # clean up
-picam2.stop()
+camera.stop()
 cv2.destroyAllWindows()

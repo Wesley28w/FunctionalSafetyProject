@@ -1,4 +1,5 @@
 from ultralytics import YOLO
+from utility import *
 
 class CV():
     def __init__(self):
@@ -23,3 +24,18 @@ class CV():
 
     def face_detected(self, frame):
         return len(self.get_face_results(frame)) > 0
+
+def crunch(person_xywhn, face_xywhn, heatmap, person_detected):
+    for box in face_xywhn:
+        ratio = float(box[2] * box[3])
+        print("Ratio: ", ratio)
+        if ratio > 0.01:
+            return True
+
+    for box in person_xywhn:
+        heat = bbox_heat_value(box, heatmap)
+
+        if abs(heat - 25.0) < 2.5: 
+            thermal_person = True
+
+    return (thermal_person and person_detected)
