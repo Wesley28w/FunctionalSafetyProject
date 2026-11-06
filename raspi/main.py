@@ -6,6 +6,7 @@ import cv2
 
 import utility
 from sensor import *
+from model import *
 
 from ultralytics import YOLO
 from raspi.constants import *
@@ -21,6 +22,7 @@ pin_cfg = [[19], []] # index 0 is output, index 1 is input
 raspi = Raspi(pin_cfg=pin_cfg)
 camera = Camera()
 ir = IRSensor()
+cv = CV()
 
 while True:
     frame = camera.capture_array()
@@ -32,11 +34,10 @@ while True:
     person_results = list(general_model(frame, classes=[0], stream=True))[0] # classes is list of items to track - 0 is person, stream = True makes more effecient
     face_results = list(face_model(frame, classes=[0], stream=True))[0] # detects faces for estimating human frame
 
-    person_results = person_results[filter_low_conf(CONFIDENCE_THRESHOLD_PERSON, person_results.boxes.conf)]
-    face_results = face_results[filter_low_conf(CONFIDENCE_THRESHOLD_FACE, face_results.boxes.conf)]
+    person_xywhn = cv.get_person_wywhn(frame)
+    face_xywhn = cv.get_face_wywhn(frame)
 
-    person_xywhn = person_results.boxes.xywhn
-    face_xywhn = face_results.boxes.xywhn
+    if person_detected(frame): shutdown = True
 
     face_close = False
     person_detected = len(person_results.boxes) > 0
