@@ -1,8 +1,8 @@
 import cv2
 from raspi.hw import *
-from model import *
+from shared.cv import *
 
-from raspi.constants import *
+from shared.constants import *
 
 raspi = Raspi()
 cv = CV()

@@ -3,8 +3,8 @@ import board
 import busio
 import adafruit_amg88xx
 from picamera2 import Picamera2
-from constants import *
-from raspi.constants import *
+from shared.constants import *
+from shared.constants import *
 from raspi.utility import *
 from gpiozero import OutputDevice, InputDevice, Motor
 
