@@ -1,5 +1,4 @@
 from constants import *
 from utility import *
-from sensor import *
-from control import *
+from raspi.hw import *
 from model import *

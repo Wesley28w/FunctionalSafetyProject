@@ -36,3 +36,9 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 font_scale = 1 
 thickeness = 2
 line_type = cv2.LINE_AA
+
+# --- board pins
+WARNING_LED_PIN = 1
+WORKING_LED_PIN = 2
+
+BUZZER_PIN = 3
