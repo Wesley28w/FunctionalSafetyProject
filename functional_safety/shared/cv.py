@@ -1,12 +1,16 @@
 import numpy as np
 from ultralytics import YOLO
-from utility import *
-from constants import CONFIDENCE_THRESHOLD_FACE, CONFIDENCE_THRESHOLD_PERSON
+
+from functional_safety.paths import FACE_MODEL, PERSON_MODEL
+from functional_safety.shared.constants import (
+    CONFIDENCE_THRESHOLD_FACE,
+    CONFIDENCE_THRESHOLD_PERSON,
+)
 
 class CV():
     def __init__(self):
-        self.person_model = YOLO('yolo11n.pt')
-        self.face_model = YOLO('yolov11n-face.pt')
+        self.person_model = YOLO(PERSON_MODEL)
+        self.face_model = YOLO(FACE_MODEL)
 
     # model fetching utility
     def get_person_results(self, frame):

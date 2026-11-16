@@ -1,3 +1,4 @@
-runs/*
-fsb/*
-__pycache__/*
+runs/
+fsb/
+__pycache__/
+*.py[cod]

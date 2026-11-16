@@ -1,12 +1,16 @@
-import cv2
 import board
 import busio
 import adafruit_amg88xx
 from picamera2 import Picamera2
-from shared.constants import *
-from shared.constants import *
-from raspi.utility import *
 from gpiozero import OutputDevice, InputDevice, Motor
+
+from functional_safety.shared.constants import (
+    BUZZER_PIN,
+    STREAM_H,
+    STREAM_W,
+    WARNING_LED_PIN,
+    WORKING_LED_PIN,
+)
 
 class Raspi():
     def __init__(self, pin_cfg):

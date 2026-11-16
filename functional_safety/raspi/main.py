@@ -1,22 +1,14 @@
 import cv2
-from .model import *
-# acts as a redundant camera + streams it own results for a visual representation
 
-print("Camera starting")
+from functional_safety.raspi.hw import Raspi
+from functional_safety.shared.cv import CV, crunch
 
-cap = cv2.VideoCapture(0)
+raspi = Raspi()
 cv = CV()
 
-if not cap.isOpened():
-    print("Error: Could not open camera.")
-    exit()
-
 while True:
-    ret, frame = cap.read()
-
-    if not ret:
-        print("Error: Failed to grab frame.")
-        break
+    frame = raspi.get_camera_frame()
+    thermal_readings = raspi.get_ir_thermals_frame()
 
     # run inference on frame
     person_results = cv.get_person_results(frame) # classes is list of items to track - 0 is person, stream = True makes more effecient
@@ -27,12 +19,20 @@ while True:
     face_xywhn = cv.get_face_wywhn(frame)
     person_detected = cv.person_detected(frame)
 
+    # determine if should shutdown..
     shutdown = crunch(person_xywhn, face_xywhn, thermal_readings, cv.person_detected(frame))
 
-    cv2.imshow("Mac Camera Stream (Press 'q' to quit)", frame)
+    if (shutdown): 
+        raspi.led_warning()
+        raspi.ring_buzzer()
+    else: 
+        raspi.led_working()
+        raspi.stop_buzzer()
+    
+    if (cv2.waitKey(1) & 0xFF) == ord("q"):
+      break
 
-    if (cv2.waitKey(1) & 0xFF == ord('q')):
-        break
-
-cap.release()
+    
+# clean up
+raspi.stop()
 cv2.destroyAllWindows()
