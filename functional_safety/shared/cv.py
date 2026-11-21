@@ -33,22 +33,42 @@ class CV():
     def face_detected(self, frame):
         return len(self.get_face_results(frame)) > 0
 
-# CV Utility
+    def get_all(self, frame):
+        return (
+            self.get_person_results(frame),
+            self.get_face_results(frame), 
+            self.get_person_wywhn(frame), 
+            self.get_face_results(frame), 
+            self.person_detected(frame)
+        )
 
-def crunch(person_xywhn, face_xywhn, heatmap, person_detected):
-    for box in face_xywhn:
-        ratio = float(box[2] * box[3])
-        print("Ratio: ", ratio)
-        if ratio > 0.01:
+    def check_shutdown(self, frame, heatmap):
+        return check(
+            self.get_person_wywhn(frame), 
+            self.get_face_wywhn(frame), 
+            heatmap # defaults to none
+        )
+
+# TODO: add like confidence scores to returns make cumalitive across the checks.
+def check(person_xywhn, face_xywhn, heatmap=None):
+    if heatmap is None: # mac case
+        for person in person_xywhn:
+            if person[2] * person[3] > 0.2: # should make more sensitive than the heatmap
+                # Big body part on screen
+                return True
+    else:
+        # if we detect a person frame and a thermal reading in that area
+        # and the heat total is over X amount
+        for person in person_xywhn:
+            if (bbox_heat_value(person, heatmap) > 25.0):
+                return True
+
+    # if we detect a face closer than some screen ratio
+    for face in face_xywhn:
+        if face[2] * face[3] > 0.01:
             return True
 
-    for box in person_xywhn:
-        heat = bbox_heat_value(box, heatmap)
-
-        if abs(heat - 25.0) < 2.5: 
-            thermal_person = True
-
-    return (thermal_person and person_detected)
+    return False
 
 def filter_low_conf(threshold, results):
     result = [i for i in results if i.boxes.confidence > threshold]

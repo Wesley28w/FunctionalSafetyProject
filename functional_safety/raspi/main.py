@@ -10,17 +10,8 @@ while True:
     frame = raspi.get_camera_frame()
     thermal_readings = raspi.get_ir_thermals_frame()
 
-    # run inference on frame
-    person_results = cv.get_person_results(frame) # classes is list of items to track - 0 is person, stream = True makes more effecient
-    face_results = cv.get_face_results(frame) # detects faces for estimating human frame
-
-    # fetch correct info from results
-    person_xywhn = cv.get_person_wywhn(frame)
-    face_xywhn = cv.get_face_wywhn(frame)
-    person_detected = cv.person_detected(frame)
-
     # determine if should shutdown..
-    shutdown = crunch(person_xywhn, face_xywhn, thermal_readings, cv.person_detected(frame))
+    shutdown = cv.check_shutdown(thermal_readings)
 
     if (shutdown): 
         raspi.led_warning()

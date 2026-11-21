@@ -1,41 +1,19 @@
+import cv
 import cv2
+from stream import Stream
 
-from functional_safety.shared.cv import CV, crunch
+from functional_safety.shared.cv import CV, check
 
 # acts as a redundant camera (TX) + streams it own results for a visual representation
 # streams raspi camera too (RX)
- 
-print("Camera starting")
-
-cap = cv2.VideoCapture(0)
-cv = CV()
-
-if not cap.isOpened():
-    print("Error: Could not open camera.")
-    exit()
+stream = Stream()
 
 while True:
-    ret, frame = cap.read()
+    frame = stream.grab_frame()
 
-    if not ret:
-        print("Error: Failed to grab frame.")
-        break
+    shutdown = check(frame)
 
-    # run inference on frame
-    person_results = cv.get_person_results(frame) # classes is list of items to track - 0 is person, stream = True makes more effecient
-    face_results = cv.get_face_results(frame) # detects faces for estimating human frame
-
-    # fetch correct info from results
-    person_xywhn = cv.get_person_wywhn(frame)
-    face_xywhn = cv.get_face_wywhn(frame)
-    person_detected = cv.person_detected(frame)
-
-    shutdown = crunch(person_xywhn, face_xywhn, thermal_readings, cv.person_detected(frame))
-
-    cv2.imshow("Mac Camera Stream (Press 'q' to quit)", frame)
+    stream.show_frame(frame)
 
     if (cv2.waitKey(1) & 0xFF == ord('q')):
         break
-
-cap.release()
-cv2.destroyAllWindows()

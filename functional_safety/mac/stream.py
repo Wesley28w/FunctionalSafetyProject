@@ -1,6 +1,7 @@
 import time
 import serial
 from serial.tools import list_ports
+import cv2
 
 PORT_NAME = "/dev/cu.usbserial-1100" # todo, check to make sure is right.. js use ls /dev/cu.*
 BAUD_RATE = 115200
@@ -46,3 +47,31 @@ def convert_to_view():
     # TODO: implement a program that converts the raw data from the UART serial debugging and then makes
     # Planning on giving tons of visualization functionality
     return
+
+class Stream():
+    def __init__(self):
+        self.cap = cv2.VideoCapture(0)
+
+        if not self.cap.isOpened():
+            print("Error: Could not open camera.")
+            exit()
+
+    def grab_frame(self):
+        ret, frame = self.cap.read()
+
+        if not ret:
+            print("Error: Failed to grab frame.")
+            return -1
+
+        return frame
+
+    def show_frame(self, frame):
+        if (cv2.waitKey(1) & 0xFF == ord('q')):
+            self.cap.release()
+            cv2.destroyAllWindows()
+            return -1
+
+        cv2.imshow("Mac Camera Stream (Press 'q' to quit)", frame)
+        return 0
+
+        
